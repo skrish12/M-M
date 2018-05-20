@@ -1,0 +1,422 @@
+Changing host name:
+----------------------------------------------------------------
+In server machine:
+vim /etc/hosts
+type=192.168.0.254  server
+     192.168.0.1    client
+     save and quit(wq!)
+
+vim /etc/sysconfig/network
+change HOSTNAME=server
+hostname
+hostname server 
+hostname
+bash
+
+In client machine:
+vim /etc/hosts
+type=192.168.0.1   client
+     192.168.0.254 Server
+     save and quit(wq!)
+
+vim /etc/sysconfig/network
+change HOSTNAME=client
+hostname
+hostname client
+hostname
+bash
+
+
+
+Ip configuration:
+-----------------------------------------------------------------------
+Enable the network:
+vim /etc/sysconfig/network -scripts/ifcfg-eth0
+  change onboot=yes
+Setting the ip address:
+setup
+selectnetworkconfig
+select runtool
+device configuration
+eth0
+enter
+static 192.168.0.254
+netmask 255.255.255.0
+default 192.168.0.254
+ok
+save
+save and quit
+quit
+service network restart
+chkconfig network on
+ifconfig
+
+In client machine:
+Enable the network:
+vim /etc/sysconfig/network -scripts/ifcfg-eth0
+  change onboot=yes
+Setting the ip address:
+setup
+selectnetworkconfig
+select runtool
+device configuration
+eth0
+enter
+static 192.168.0.1
+netmask 255.255.255.0
+default 192.168.0.1
+ok
+save
+save and quit
+quit
+service network restart
+chkconfig network on
+ifconfig
+
+
+Installing yum packages:
+-----------------------------------------------------------------------
+server:
+Right click on DVD-> Open terminal
+cd Packages/
+rpm -ivh deltarpm (tab)
+rpm -ivh python-deltarpm (tab)
+rpm -ivh ftp (tab)
+rpm -ivh vsftpd (tab)
+rpm -ivh createrepo (tab)
+cd ..
+mkdir -p /var/ftp/pub/rhel6
+cp -rfv * /var/ftp/pub/rhel6/
+createrepo -g repodata/6 (press tab and type) /var/ftp/pub/rhrl6
+vim/etc/selinux/config  (another terminal)
+Change SELINUX=disabled
+reboot
+
+yum client in server:(In server machine)
+cd /etc/yum.repos.d/
+ll
+rm -rfv * 
+ll
+vim server.repo
+Type [RHEL6]
+     name=RHEL6
+     baseurl=copy browser link or paste
+     enabled =1
+     gpgcheck=0
+yum clean all
+yum list all
+yum makecache
+
+yum client in client(In client machine):
+cd Packages/
+rpm -ivh ftp tab
+rpm -ivh vsftpd tab
+open browser search ftp://server
+cd /etc/yum.repos.d/
+ll
+rm -rfv * 
+ll
+vim client.repo
+Type [RHEL6]
+     name=RHEL6
+     baseurl=copy browser link or paste
+     enabled =1
+     gpgcheck=0
+
+yum clean all
+yum list all
+yum makecache
+yum install telnet* -y
+telnet server
+w
+exit
+
+Telnet server:
+-----------------------------
+rpm -qa | grep *telnet*
+rpm -qa | grep sshd*
+yum install telnet* -y
+rpm -qa | grep telnet*
+vim /etc/xinetd.d/telnet
+ change disabled=no
+service xinetd restart
+chkconfig xinetd on
+telnet 0
+pwd
+w
+exit
+telnet0
+
+
+
+
+1. go to the /root directory list all(ls -l) files in that directory.
+create a ditrectory named /mydata with data.Now perform the backup-restore
+that floder using the backu restore tools possible
+
+
+cd /root/
+ls-l
+mkdir /mydata
+cd /mydata/
+cat >>file1.txt
+
+	enter the data and press ctrl+D to save and exit.
+cat file1.txt
+
+cat >>file2.txt
+cat file2.txt
+ll(To see the file in the directory)
+man dump (Type q to exit)
+yum install dump* -y
+dump --info
+cd ..
+dump -0af/mydata.dump /mydata/
+cd /mydata
+pwd
+ll
+rm -rfv file1.txt
+ll
+cd /
+ls -l(To see wetherv the dump is created are not)
+restore -if /mydata.dump
+restore>pwd
+restore>cd/mydata/
+restore> pwd 
+restore >ls
+restore >pwd
+restore >ls
+restore >add file1.txt
+restore >extract----n---1-----n
+restore > quit
+cd /mydata
+ll
+cd ..
+==================================================
+2.vnc connectity
+===========
+First install yum packages and then install
+-------------------------------------
+yum install pixman pixman-devel libXfont  -y
+yum install vnc-server-y
+
+create the vnc user
+---------------------
+useradd user1
+useradd user2
+passwd user1
+passwd user2
+
+su - user1
+vncpasswd
+exit
+su - user2
+vncpasswd
+exit
+
+configure the server for users:
+---------------------------------
+vim /etc/sysconfig/vncservers
+
+:se nu
+
+In line 18,19 remove #
+
+line 18:VNCSERVERS= "1:user1 2:user2"
+19-geometry 800*600
+20-geometry 1024*768
+
+:wq!(save and quit)
+
+service vncserver start
+
+In client machine
+=================
+yum install tiger* -y
+vncviewer 192.168.0.254:1
+
+In vncviewr machine open ternminal 
+
+w
+ifconfig (To chevck server ipaddress is assigned to the vncuser or not)
+
+In server machine
+-----------------
+yum install tiger* -y
+vncviewer 192.168.0.254:2
+
+=========================================================
+3.ADD 5 SCSI HDDS Wuth 10GB
+
+creating physical volume
+-----------------------
+first create disk partition and then create physical volume
+
+disk partition
+------------------
+fdisk /dev/sdb
+m
+m
+p
+1
+enter
++10G
+enter
+t
+8e
+w
+kpartx /dev/sdb1
+
+physical volume
+------------------
+pvcreate /dev/sdb1  /dev/sdc1 /dev/sdd1 /dev/sde1  /dev/sdf1
+pvs
+
+create volume group
+--------------------
+vgcreate group1 /dev/sdb1 /dev/sdc1 ............
+vgcreate group2 /dev/sde1 /dev/sdf1
+vgs
+
+create logical volume of 12GB,15GB,18GB
+------------------------------------------
+lvcreate group -L +12G -n volume1
+lvcreate group -L +15G -n volume2
+lvcreate group -L +18G -n volume3
+.
+creating the file system:
+---------------------------
+mkfs.ext4 /dev/group/volume1
+mkfs.ext4 /dev/group/volume2
+mkfs.ext4 /dev/group/volume3
+
+creating mount point
+-------------------
+mkdir /dir1
+mkdir /dir2
+mkdir /dir3
+
+vim /etc/fstan (for permanent mounting)
+in this console type
+
+#lvm
+/dev/group/volume1 /dir1 ext4 default 0 0
+
+/dev/group/volume2 /dir2 ext4 default 0 0
+
+/dev/group/volume3 /dir3 ext4 default 0 0
+
+mount -a
+df -hT
+
+checking whwether the data can be stored or not
+-------------------------------
+cd /dir1/
+touch file
+ll
+cd ..
+df -hT
+
+================================================
+4.scheduling
+
+mkdir /folder
+crontab -l
+crontab -l -u dileep
+crontab -e
+
+*/15 * / 10-12 1-5 rm-rfv /folder
+ service crond restart
+chkconfig crond on
+service crond status
+=====================================
+5.Firewall
+
+ssh root@server
+yes
+pwd
+w
+vi firewall
+
+iptables -A INPUT -p tcp --dport22 -j REJECT
+save andv exit
+:wq!
+sh firewall
+
+another terminal
+===========================
+ssh root@server (it show server refuse message)
+vi firewall
+reboot
+-----
+ssh root@server
+vi firewall
+iptables -F
+iptables -A INPUT -p tcp --dport 22 -REJECT
+iptables -A INPUT -p tcp --dport 21 -REJECT
+:wq!
+
+sh firewall
+open brosernit should show blocked
+=======================================
+6. sudo user
+
+useradd bdileep
+passwd bdileep
+visudo 
+99-bdileep ALL=(ALL)ALL
+su dileep
+user add vinay sudo add vinay
+======================================
+7.hard
+----------
+mkdir /link
+cd /link
+cat >>abc.txt
+ll
+ls -li abc.txt
+ln abc.tct xyz.txt
+ls -li
+cat >>xyz.txt
+cat abc.txt
+rm -rfv xyz.txt
+ll
+cat abc.txt
+
+soft
+-------
+mkdir /link1
+cd /link1
+cat >>file1.txt
+ll
+ls -li file1.txt
+ln file1.tct file2.txt
+ls -li
+cat >>file2.txt
+cat file1.txt
+rm -rfv file2.txt
+ll
+cat file1.txt
+=========================================
+
+
+VNC SERVER WITHOUT INSTALLING YUM PACKAGES:
+----------------------------------------------------
+Login as root
+Right click on CD/DVD-open terminal
+cd Packages/
+rpm -ivh pixman-
+rpm -ivh pixman-(press tab)
+rpm -ivh tiger*
+cd /
+useradd vncu1
+passwd vncu1
+su -vncu1
+vncpasswd
+exit
+vim /etc/sysconfig/vncservers
+ CHANGE VNCSERVERS="1:vncu1"
+ vncserverargs[1]="-geometry 800*600"
+service vncserver restart
+vncviewer 192.168.0.254:1
+
